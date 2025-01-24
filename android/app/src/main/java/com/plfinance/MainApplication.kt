@@ -1,4 +1,4 @@
-package com.financeddeviceapp
+package com.plfinance
 
 import android.app.Application
 import com.facebook.react.PackageList
