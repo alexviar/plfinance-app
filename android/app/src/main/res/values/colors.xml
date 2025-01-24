@@ -1,0 +1,5 @@
+<resources>
+    <color name="bootsplash_background">#171717</color>
+    <color name="status_bar_color">@android:color/transparent</color>
+    <color name="navigation_bar_color">@android:color/transparent</color>
+</resources>

@@ -1,5 +1,5 @@
 {
-  "name": "FinancedDeviceApp",
+  "name": "plfinance",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "react": "18.3.1",
-    "react-native": "0.77.0"
+    "react-native": "0.77.0",
+    "react-native-bootsplash": "^6.3.2",
+    "react-native-system-navigation-bar": "^2.6.4",
+    "react-native-video": "^6.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
