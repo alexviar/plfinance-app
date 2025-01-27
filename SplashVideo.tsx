@@ -43,8 +43,7 @@ const SplashVideo = ({ onVideoEnd }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: 'black',
+    ...StyleSheet.absoluteFillObject
   },
   video: {
     position: 'absolute',

@@ -1,56 +1,40 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React from 'react';
+import { StyleSheet, Animated } from 'react-native';
+import WebView from 'react-native-webview';
 
 type Props = {
   onReady?(): void
 }
 
 const MainScreen = ({ onReady }: Props) => {
-  const opacity = new Animated.Value(0);
-
-  useEffect(() => {
-    // Simular carga de recursos
-    setTimeout(() => {
-      onReady?.();
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }, 2000);
-  }, [])
-
-  // useEffect(() => {
-  //   if (visible) {
-  //     Animated.timing(opacity, {
-  //       toValue: 1,
-  //       duration: 300,
-  //       useNativeDriver: true,
-  //     }).start();
-  //   }
-
-  // }, [visible]);
-
-  // if (!visible) return null;
+  // const opacity = new Animated.Value(0);
+  const [visible, setVisible] = React.useState(false)
 
   return (
-    <Animated.View style={[styles.container, { opacity }]}>
-      <Text style={styles.text}>🚧 En Construcción 🚧</Text>
-    </Animated.View>
+    // <Animated.View style={[styles.container, { opacity }]}>
+    <WebView
+      style={{ display: visible ? 'flex' : 'none' }}
+      source={{ uri: "http://192.168.0.101:5173/" }}
+      onLoadEnd={() => {
+        onReady?.()
+        setVisible(true)
+        // Animated.timing(opacity, {
+        //   toValue: 1,
+        //   duration: 300,
+        //   useNativeDriver: true,
+        // }).start();
+      }}
+    />
+    // </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FF6B00',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  text: {
-    fontSize: 24,
-    color: '#FFFFFF',
-  },
+  }
 });
 
 export default MainScreen;
