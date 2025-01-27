@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "506104105535",
+    "project_id": "plfinance-e3759",
+    "storage_bucket": "plfinance-e3759.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506104105535:android:e5d7d132a27ac3ed68c68a",
+        "android_client_info": {
+          "package_name": "com.plfinance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALnXq1eR1twohFB7toXIXml1sJjYQG8UY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
