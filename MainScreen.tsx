@@ -14,7 +14,7 @@ const MainScreen = ({ onReady }: Props) => {
     // <Animated.View style={[styles.container, { opacity }]}>
     <WebView
       style={{ display: visible ? 'flex' : 'none' }}
-      source={{ uri: "http://192.168.0.101:5173/" }}
+      source={{ uri: "http://plfinancedev.eastus.cloudapp.azure.com" }}
       onLoadEnd={() => {
         onReady?.()
         setVisible(true)
