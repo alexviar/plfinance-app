@@ -1,5 +1,7 @@
 package com.plfinance
 
+import android.app.admin.DevicePolicyManager
+import android.content.Context
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -8,6 +10,7 @@ import android.os.Bundle;
 import com.zoontek.rnbootsplash.RNBootSplash;
 
 class MainActivity : ReactActivity() {
+    private lateinit var devicePolicyManager: DevicePolicyManager
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
@@ -25,5 +28,16 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
     super.onCreate(savedInstanceState) // super.onCreate(null) with react-native-screens
+  }
+
+  override fun onResume() {
+    super.onResume()
+    devicePolicyManager = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+    
+    intent.getBooleanExtra(DeviceManagementModule.EXTRA_LOCK_TASK, false).let { shouldLock ->
+        if (shouldLock && devicePolicyManager.isDeviceOwnerApp(packageName)) {
+            startLockTask()
+        }
+    }
   }
 }
