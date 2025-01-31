@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
@@ -98,6 +99,19 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             Log.d(TAG, "Restricción DISALLOW_FACTORY_RESET aplicada");
         } else {
             Log.e(TAG, "La aplicación no es Device Owner");
+        }
+    }
+
+    @ReactMethod
+    public boolean isLocked() {
+        Log.d(TAG, "Aplicando restricción DISALLOW_FACTORY_RESET");
+        
+        if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
+            Bundle bundle = devicePolicyManager.getApplicationRestrictions(adminComponent);
+            return bundle.getBoolean("lock_devices", false); // Se agrega valor por defecto
+        } else {
+            Log.e(TAG, "La aplicación no es Device Owner");
+            return false; // Retornar un valor en caso de que no sea Device Owner
         }
     }
 
