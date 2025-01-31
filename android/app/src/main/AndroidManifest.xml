@@ -3,6 +3,7 @@
   <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.Manifest.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
   <application
     android:name=".MainApplication"
@@ -44,6 +45,13 @@
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
         <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </receiver>
+    <receiver
+      android:name=".LockDeviceReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.plfinance.LOCK_DEVICE" />
       </intent-filter>
     </receiver>
   </application>

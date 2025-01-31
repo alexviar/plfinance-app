@@ -1,24 +1,28 @@
 package com.plfinance;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.KeyguardManager;
+import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.NonNull;
-import android.util.Log;
-import android.app.KeyguardManager;
+import android.os.Build;
 import android.os.UserManager;
+import android.provider.Settings;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import java.lang.SuppressWarnings;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.lang.SuppressWarnings;
-import java.lang.reflect.Method;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 public class DeviceManagementModule extends ReactContextBaseJavaModule {
     private static final String TAG = "DeviceManagementModule";
@@ -44,7 +48,6 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void lock() {
         String packageName = getReactApplicationContext().getPackageName();
-        // Configurar LockTask al habilitar el propietario del dispositivo
         if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
             String[] packages = new String[] { packageName };
             devicePolicyManager.setLockTaskPackages(adminComponent, packages);
@@ -65,7 +68,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             currentActivity.stopLockTask();
             currentActivity.finish();
         } else {
-            Log.e(TAG, "La app no esta en primer plano");
+            Log.e(TAG, "La app no está en primer plano");
         }
     }
 
@@ -75,24 +78,22 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         try {
             if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
                 devicePolicyManager.clearDeviceOwnerApp(reactContext.getPackageName());
-                Log.d("DeviceOwner", "Device owner removed successfully");
+                Log.d(TAG, "Device owner eliminado correctamente");
             }
 
             if (devicePolicyManager.isAdminActive(adminComponent)) {
                 devicePolicyManager.removeActiveAdmin(adminComponent);
-                Log.d("DeviceOwner", "Admin rights removed successfully");
+                Log.d(TAG, "Admin eliminado correctamente");
             }
         } catch (SecurityException e) {
-            Log.e("DeviceOwner", "Error removing device owner/admin: " + e.getMessage());
+            Log.e(TAG, "Error al eliminar device owner/admin: " + e.getMessage());
         }
     }
 
     @ReactMethod
     public void disallowFactoryReset() {
         Log.d(TAG, "Aplicando restricción DISALLOW_FACTORY_RESET");
-        // Verificar si es Device Owner
         if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
-            // Aplicar restricciones
             devicePolicyManager.addUserRestriction(adminComponent, UserManager.DISALLOW_FACTORY_RESET);
             Log.d(TAG, "Restricción DISALLOW_FACTORY_RESET aplicada");
         } else {
@@ -101,84 +102,85 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void startLockTask() {
-        Log.d(TAG, "Iniciando Lock Mode");
-
-        // First, confirm that this package is allowlisted to run in lock task mode.
-        if (devicePolicyManager.isLockTaskPermitted(getReactApplicationContext().getPackageName())) {
-            android.widget.Toast.makeText(getReactApplicationContext(), "Iniciando bloqueo de tareas...",
-                    android.widget.Toast.LENGTH_SHORT).show();
-            getCurrentActivity().startLockTask();
-        } else {
-            android.widget.Toast.makeText(getReactApplicationContext(), "El bloquo de tareas no esta permitido...",
-                    android.widget.Toast.LENGTH_SHORT).show();
-            // Because the package isn't allowlisted, calling startLockTask() here
-            // would put the activity into screen pinning mode.
-        }
-    }
-
-    @ReactMethod
-    public void stopLockTask() {
-        Log.d(TAG, "Deteniendo Bloqueo de tareas");
-        android.widget.Toast.makeText(getReactApplicationContext(), "Deteniendo el bloqueo de tareas...",
-                android.widget.Toast.LENGTH_SHORT).show();
-        getCurrentActivity().stopLockTask();
-    }
-
-    @ReactMethod
-    public void enableLockTask() {
-        String packageName = getReactApplicationContext().getPackageName();
-        // Configurar LockTask al habilitar el propietario del dispositivo
-        if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
-            String[] packages = new String[] { packageName };
-            devicePolicyManager.setLockTaskPackages(adminComponent, packages);
-            Log.d(TAG, "LockTask configurado correctamente");
-            android.widget.Toast.makeText(getReactApplicationContext(), "LockTask configurado correctamente",
-                    android.widget.Toast.LENGTH_SHORT).show();
-        } else {
-            Log.e(TAG, "La app no es propietaria del dispositivo");
-            android.widget.Toast.makeText(getReactApplicationContext(), "La app no es prpietaria del dispositivo",
-                    android.widget.Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @ReactMethod
-    public void setDeviceOwner() {
-        try {
-            String packageName = getReactApplicationContext().getPackageName();
-
-            if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
-                Log.d(TAG, "Ya es propietario del dispositivo");
+    public void scheduleDeviceLock(int installmentId, long dueDateTimestamp) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getReactApplicationContext().startActivity(intent);
                 return;
             }
+        }
 
-            String command = "dpm set-device-owner " + packageName + "/.MyDeviceAdminReceiver";
-            Process process = Runtime.getRuntime().exec(command);
+        AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            StringBuilder output = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
+        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        intent.setAction("com.plfinance.LOCK_DEVICE");
 
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                Log.d(TAG, "Device Owner configurado correctamente: " + output.toString());
-                android.widget.Toast.makeText(getReactApplicationContext(),
-                        "Configurado como Device Owner",
-                        android.widget.Toast.LENGTH_SHORT).show();
-            } else {
-                Log.e(TAG, "Error al ejecutar comando: " + output.toString());
-                android.widget.Toast.makeText(getReactApplicationContext(),
-                        "Error al configurar Device Owner",
-                        android.widget.Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error: " + e.getMessage());
-            android.widget.Toast.makeText(getReactApplicationContext(),
-                    "Error: " + e.getMessage(),
-                    android.widget.Toast.LENGTH_LONG).show();
+        // Usar installmentId como request code para cancelación individual
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+            getReactApplicationContext(),
+            installmentId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // Parsear dueDate a milisegundos
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            long dueTimeMillis = Long.parseLong(dueDate);
+            calendar.setTimeInMillis(dueTimeMillis);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return; // Manejar formato inválido
+        }
+
+        // Programar la alarma
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                pendingIntent
+            );
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                pendingIntent
+            );
+        }
+        
+        Log.e(TAG, "Se programó el bloqueo en la fecha de corte");
+    }
+
+    @ReactMethod
+    public void cancelDeviceLock(int installmentId) {
+        AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+
+        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        intent.setAction("com.plfinance.LOCK_DEVICE");
+
+        // Configurar flags según versión de Android
+        int flags = PendingIntent.FLAG_NO_CREATE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+
+        // Recuperar PendingIntent existente
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+            getReactApplicationContext(),
+            installmentId,
+            intent,
+            flags
+        );
+
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent);
+            pendingIntent.cancel(); // Limpiar el PendingIntent
         }
     }
 
@@ -188,46 +190,6 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    private void changePasswordWithToken(String newPassword) {
-        byte[] token = "01234567891012131415161718192021222".getBytes(); // generateRandomPasswordToken();
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // devicePolicyManager.setKeyguardDisabledFeatures(adminComponent,
-            // DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT);
-            if (devicePolicyManager.isResetPasswordTokenActive(this.adminComponent)) {
-                Log.d("DeviceOwner", "El token es válido y está activo.");
-                boolean changed = devicePolicyManager.resetPasswordWithToken(this.adminComponent, newPassword, token,
-                        0);
-                if (changed) {
-                    Log.d("DeviceOwner", "Contraseña cambiada con éxito.");
-                } else {
-                    Log.e("DeviceOwner", "Error al cambiar la contraseña.");
-                }
-            } else {
-                Log.e("DeviceOwner", "El token no es válido o no está activo.");
-                boolean success = devicePolicyManager.setResetPasswordToken(this.adminComponent, token);
-                KeyguardManager keyguardManager = (KeyguardManager) reactContext
-                        .getSystemService(Context.KEYGUARD_SERVICE);
-                Intent confirmIntent = keyguardManager.createConfirmDeviceCredentialIntent(null,
-                        "ACTIVATE_TOKEN_PROMPT");
-
-                if (confirmIntent != null) {
-                    Activity currentActivity = getCurrentActivity();
-                    if (currentActivity != null) {
-                        currentActivity.startActivityForResult(confirmIntent, 1);
-                    }
-                    // Check your onActivityResult() callback for RESULT_OK
-                } else {
-                    // Null means the user doesn't have a lock screen so the token is already
-                    // active.
-                    // Call isResetPasswordTokenActive() if you need to confirm
-                }
-            }
-        } else {
-            devicePolicyManager.resetPassword(newPassword, DevicePolicyManager.RESET_PASSWORD_REQUIRE_ENTRY);
         }
     }
 }
