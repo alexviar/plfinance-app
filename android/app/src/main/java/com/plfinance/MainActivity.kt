@@ -1,12 +1,15 @@
 package com.plfinance
 
 import android.app.admin.DevicePolicyManager
+import android.content.ComponentName;
 import android.content.Context
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 import com.zoontek.rnbootsplash.RNBootSplash;
 
 class MainActivity : ReactActivity() {
@@ -33,11 +36,18 @@ class MainActivity : ReactActivity() {
   override fun onResume() {
     super.onResume()
     devicePolicyManager = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-    
-    intent.getBooleanExtra(DeviceManagementModule.EXTRA_LOCK_TASK, false).let { shouldLock ->
-        if (shouldLock && devicePolicyManager.isDeviceOwnerApp(packageName)) {
-            startLockTask()
-        }
+    val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
+
+    if(devicePolicyManager.isDeviceOwnerApp(packageName)){
+      val bundle = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName)
+      val shouldLock = bundle.getBoolean("isLocked", false)
+      
+      Toast.makeText(this, if (shouldLock) "Lock task activado" else "Lock task no activado", Toast.LENGTH_SHORT).show()
+      Log.e("MainActivity", if (shouldLock) "Lock task activado" else "Lock task no activado");
+      if (shouldLock && devicePolicyManager.isDeviceOwnerApp(packageName)) {
+          startLockTask()
+      }
     }
+    
   }
 }
