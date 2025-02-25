@@ -1,5 +1,6 @@
 package com.plfinance;
 
+import android.widget.Toast;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.KeyguardManager;
@@ -44,18 +45,32 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         return "DeviceManagement";
     }
 
-    public static final String EXTRA_LOCK_TASK = "lock_task_mode";
+    private setIsLocked(boolean isLocked){
+        String packageName =  getReactApplicationContext().getPackageName();
+        Bundle bundle = devicePolicyManager
+            .getApplicationRestrictions(adminComponent, packageName);
+
+        if (bundle == null) {
+            bundle = new Bundle();
+        }
+
+        bundle.putBoolean("isLocked", isLocked);
+
+        devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, bundle);
+    }
 
     @ReactMethod
     public void lock() {
         String packageName = getReactApplicationContext().getPackageName();
         if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
+
+            setIsLocked(true);
+
             String[] packages = new String[] { packageName };
             devicePolicyManager.setLockTaskPackages(adminComponent, packages);
 
             Intent intent = new Intent(reactContext, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.putExtra(EXTRA_LOCK_TASK, true);
             reactContext.startActivity(intent);
         } else {
             Log.e(TAG, "La app no es propietaria del dispositivo");
@@ -66,8 +81,13 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     public void unlock() {
         Activity currentActivity = getCurrentActivity();
         if (currentActivity != null) {
+
+            setIsLocked(false);
+
             currentActivity.stopLockTask();
             currentActivity.finish();
+
+            Log.e(TAG, "Dispositivo desbloqueado y restricción eliminada");
         } else {
             Log.e(TAG, "La app no está en primer plano");
         }
@@ -105,10 +125,12 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public boolean isLocked() {
         Log.d(TAG, "Aplicando restricción DISALLOW_FACTORY_RESET");
-        
+
         if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
-            Bundle bundle = devicePolicyManager.getApplicationRestrictions(adminComponent);
-            return bundle.getBoolean("lock_devices", false); // Se agrega valor por defecto
+            Bundle bundle = devicePolicyManager.getApplicationRestrictions(adminComponent,
+                    getReactApplicationContext().getPackageName());
+            Log.e(TAG, "Lock" + bundle.getBoolean("isLocked", false));
+            return bundle != null && bundle.getBoolean("isLocked", false);
         } else {
             Log.e(TAG, "La aplicación no es Device Owner");
             return false; // Retornar un valor en caso de que no sea Device Owner
@@ -116,36 +138,27 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void scheduleDeviceLock(int installmentId, long dueDateTimestamp) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
-            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getReactApplicationContext().startActivity(intent);
-                return;
-            }
-        }
+    public void scheduleDeviceLock(int installmentId, String dueDateTimestamp) {
 
         AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
+        if (alarmManager == null)
+            return;
 
         Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
 
         // Usar installmentId como request code para cancelación individual
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
-            getReactApplicationContext(),
-            installmentId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+                getReactApplicationContext(),
+                installmentId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         // Parsear dueDate a milisegundos
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
-            long dueTimeMillis = Long.parseLong(dueDate);
+            long dueTimeMillis = Long.parseLong(dueDateTimestamp);
             calendar.setTimeInMillis(dueTimeMillis);
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -155,25 +168,24 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         // Programar la alarma
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                pendingIntent
-            );
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    pendingIntent);
         } else {
             alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                pendingIntent
-            );
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    pendingIntent);
         }
-        
+
         Log.e(TAG, "Se programó el bloqueo en la fecha de corte");
     }
 
     @ReactMethod
     public void cancelDeviceLock(int installmentId) {
         AlarmManager alarmManager = (AlarmManager) getReactApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
+        if (alarmManager == null)
+            return;
 
         Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
@@ -186,24 +198,14 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
 
         // Recuperar PendingIntent existente
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
-            getReactApplicationContext(),
-            installmentId,
-            intent,
-            flags
-        );
+                getReactApplicationContext(),
+                installmentId,
+                intent,
+                flags);
 
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel(); // Limpiar el PendingIntent
-        }
-    }
-
-    private byte[] generateRandomPasswordToken() {
-        try {
-            return SecureRandom.getInstance("SHA1PRNG").generateSeed(32);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
         }
     }
 }
