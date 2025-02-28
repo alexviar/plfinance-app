@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import BootSplash from "react-native-bootsplash";
 import SplashVideo from './SplashVideo';
 import MainScreen from './MainScreen';
-import { SafeAreaView, PermissionsAndroid, Alert, NativeModules } from 'react-native';
+import { SafeAreaView, PermissionsAndroid, Alert, NativeModules, BackHandler } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 
 const { DeviceManagement } = NativeModules
@@ -18,11 +18,18 @@ const App = () => {
     setPostNotificationsPermissionStatus
   ] = useState<string | null>(null)
   useEffect(() => {
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-      .then((value) => {
-        console.log('PermissionStatus', value)
-        setPostNotificationsPermissionStatus(value)
-      });
+    async function requestPermissions() {
+      const value = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+      console.log('PermissionStatus', value)
+      setPostNotificationsPermissionStatus(value)
+    }
+
+    requestPermissions()
+
+  }, [])
+
+  useEffect(() => {
+    console.log("Hola mundo")
   }, [])
 
   useEffect(() => {
