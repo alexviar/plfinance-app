@@ -52,16 +52,12 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
 
     private void setIsLocked(boolean isLocked) {
         String packageName = getReactApplicationContext().getPackageName();
-        Bundle bundle = devicePolicyManager
-                .getApplicationRestrictions(adminComponent, packageName);
+        Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
+        Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
 
-        if (bundle == null) {
-            bundle = new Bundle();
-        }
+        restrictions.putBoolean("isLocked", isLocked);
 
-        bundle.putBoolean("isLocked", isLocked);
-
-        devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, bundle);
+        devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
     }
 
     @ReactMethod
@@ -143,16 +139,12 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     private void setEnrollmentData(Bundle enrollmentBundle) {
         if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
             String packageName = getReactApplicationContext().getPackageName();
-            Bundle bundle = devicePolicyManager
-                    .getApplicationRestrictions(adminComponent, packageName);
+            Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
+            Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
 
-            if (bundle == null) {
-                bundle = new Bundle();
-            }
+            restrictions.putBundle("enrollmentData", enrollmentBundle);
 
-            bundle.putBundle("enrollmentData", enrollmentBundle);
-
-            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, bundle);
+            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
         } else {
             Log.e(TAG, "La aplicación no es Device Owner");
         }
