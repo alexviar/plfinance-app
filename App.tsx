@@ -15,11 +15,18 @@ const App = () => {
     setPostNotificationsPermissionStatus
   ] = useState<string | null>(null)
   useEffect(() => {
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-      .then((value) => {
-        console.log('PermissionStatus', value)
-        setPostNotificationsPermissionStatus(value)
-      });
+    async function requestPermissions() {
+      const value = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+      console.log('PermissionStatus', value)
+      setPostNotificationsPermissionStatus(value)
+    }
+
+    requestPermissions()
+
+  }, [])
+
+  useEffect(() => {
+    console.log("Hola mundo")
   }, [])
 
   return (

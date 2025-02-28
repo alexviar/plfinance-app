@@ -1,5 +1,11 @@
 package com.plfinance
 
+
+import android.Manifest
+import android.app.AlarmManager
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName;
 import android.content.Context
@@ -39,6 +45,18 @@ class MainActivity : ReactActivity() {
     val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
 
     if(devicePolicyManager.isDeviceOwnerApp(packageName)){
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+        devicePolicyManager.setPermissionGrantState(
+            adminComponent,
+            packageName,
+            Manifest.permission.SCHEDULE_EXACT_ALARM,
+            DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+        )
+    
+        devicePolicyManager.setPermissionPolicy(adminComponent, DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT)
+      }
+
       val bundle = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName)
       val shouldLock = bundle.getBoolean("isLocked", false)
       
@@ -48,6 +66,15 @@ class MainActivity : ReactActivity() {
           startLockTask()
       }
     }
-    
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+      if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+          val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          startActivity(intent)
+      }
+    }
   }
 }

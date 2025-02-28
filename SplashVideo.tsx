@@ -9,9 +9,9 @@ type Props = {
 
 const SplashVideo = ({ onVideoEnd }: Props) => {
   React.useEffect(() => {
-    StatusBar.setTranslucent(true);
-    StatusBar.setBackgroundColor('transparent');
-    SystemNavigationBar.setNavigationColor('transparent', 'dark');
+    // StatusBar.setTranslucent(true);
+    // StatusBar.setBackgroundColor('transparent');
+    // SystemNavigationBar.setNavigationColor('transparent', 'dark');
   }, []);
 
   const handleVideoEnd = () => {

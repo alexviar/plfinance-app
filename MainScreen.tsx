@@ -4,13 +4,13 @@ import { StyleSheet, Animated, NativeModules, Alert, Button } from 'react-native
 import WebView from 'react-native-webview';
 
 const debugging = `
-  const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'event': 'Console', 'payload': {'type': type, 'log': log}}));
+  const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'event': 'debug', 'payload': {'type': type, 'log': log}}));
   console = {
-    log: (log) => consoleLog('log', log),
-    debug: (log) => consoleLog('debug', log),
-    info: (log) => consoleLog('info', log),
-    warn: (log) => consoleLog('warn', log),
-    error: (log) => consoleLog('error', log),
+    log: (...log) => consoleLog('log', log),
+    debug: (...log) => consoleLog('debug', log),
+    info: (...log) => consoleLog('info', log),
+    warn: (...log) => consoleLog('warn', log),
+    error: (...log) => consoleLog('error', log),
   };
   true;
 `;
@@ -24,22 +24,19 @@ const MainScreen = ({ onReady }: Props) => {
   const [loaded, setLoaded] = React.useState(false);
 
   const postMessage = useCallback((data: any) => {
-    // Creamos un script que despacha un evento 'message' con los datos
     const script = `
-      (function() {
-        const event = new MessageEvent('message', ${JSON.stringify(data)});
-        window.dispatchEvent(event);
-      })();
-      true;
+    window.receiveNativeCommand(${JSON.stringify(data)})
+    true;
     `;
     webViewRef.current?.injectJavaScript(script);
   }, [])
 
   useEffect(() => {
     if (loaded) {
-      const isLocked: boolean = NativeModules.DeviceManagement.isLocked();
-      console.log("Locked", isLocked)
-      postMessage({ event: 'lock' })
+      const locked: boolean = NativeModules.DeviceManagement.isLocked();
+      const enrollmentData = NativeModules.DeviceManagement.getEnrollmentData();
+      console.log({ locked, enrollmentData })
+      postMessage({ type: 'setState', payload: { locked, enrollmentData } })
     }
   }, [loaded, postMessage])
 
@@ -49,30 +46,32 @@ const MainScreen = ({ onReady }: Props) => {
         ref={webViewRef}
         injectedJavaScript={debugging}
         style={{ display: loaded ? 'flex' : 'none' }}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
         source={{ uri: "https://plfinance.girchop.com" }}
         onMessage={async ({ nativeEvent: { data } }) => {
           try {
             const { event, payload } = JSON.parse(data);
             if (event === 'debug') {
-              console.log(payload)
+              console.log("Webview", payload)
             } else if (event === 'unlock') {
               NativeModules.DeviceManagement.unlock();
-            } else if (event === 'installments_received') {
+            } else if (event === 'enroll_device') {
               const pendingToken = messaging()
                 .getToken()
 
-              payload.forEach((installment: { id: number, dueDate: string }) => {
-                NativeModules.DeviceManagement.scheduleDeviceLock(installment.id, String(Date.parse(installment.dueDate)));
-              })
+              console.log(payload);
+              NativeModules.DeviceManagement.enroll(payload);
 
               let token
               try {
                 token = await pendingToken
                 console.log('ReactNativeLog', 'FCM Token:', token);
               } catch { }
-              postMessage({ event: 'enroll_device', payload: { purchaseId: payload.purchaseId, token } })
+              postMessage({ type: 'finish_device_enrollment', payload: { deviceId: payload.deviceId, token } })
             }
           } catch (error) {
+            console.log(error)
             Alert.alert('Error al procesar el mensaje:' + error);
           }
         }}
