@@ -31,15 +31,6 @@ const MainScreen = ({ onReady }: Props) => {
     webViewRef.current?.injectJavaScript(script);
   }, [])
 
-  useEffect(() => {
-    if (loaded) {
-      const locked: boolean = NativeModules.DeviceManagement.isLocked();
-      const enrollmentData = NativeModules.DeviceManagement.getEnrollmentData();
-      console.log({ locked, enrollmentData })
-      postMessage({ type: 'setState', payload: { locked, enrollmentData } })
-    }
-  }, [loaded, postMessage])
-
   return (
     <>
       <WebView
@@ -54,6 +45,11 @@ const MainScreen = ({ onReady }: Props) => {
             const { event, payload } = JSON.parse(data);
             if (event === 'debug') {
               console.log("Webview", payload)
+            } else if (event === 'getState') {
+              const locked: boolean = NativeModules.DeviceManagement.isLocked();
+              const enrollmentData = NativeModules.DeviceManagement.getEnrollmentData();
+              console.log("getState", { locked, enrollmentData })
+              postMessage({ type: 'setState', payload: { locked, enrollmentData } })
             } else if (event === 'unlock') {
               NativeModules.DeviceManagement.unlock();
             } else if (event === 'enroll_device') {
