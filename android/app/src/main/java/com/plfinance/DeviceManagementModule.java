@@ -51,13 +51,17 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     }
 
     private void setIsLocked(boolean isLocked) {
-        String packageName = getReactApplicationContext().getPackageName();
-        Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
-        Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
+        if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
+            String packageName = getReactApplicationContext().getPackageName();
+            Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
+            Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
 
-        restrictions.putBoolean("isLocked", isLocked);
+            restrictions.putBoolean("isLocked", isLocked);
 
-        devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
+            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
+        } else {
+            Log.e(TAG, "La aplicación no es Device Owner");
+        }
     }
 
     @ReactMethod
