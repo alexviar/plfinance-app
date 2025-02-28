@@ -21,13 +21,18 @@ class LockDeviceReceiver : BroadcastReceiver() {
             devicePolicyManager.setLockTaskPackages(adminComponent, packages)
             Log.d("LockDeviceReceiver", "La aplicación tiene privilegios de administrador")
 
-            // Crear restricciones
-            val restrictions = Bundle().apply {
-                putBoolean("isLocked", true)
-            }
+            // Obtener las restricciones actuales
+            val currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, context.packageName)
+
+            // Si existen, copiarlas a un nuevo Bundle, o crear uno nuevo si no existen
+            val restrictions = currentRestrictions?.let { Bundle(it) } ?: Bundle()
+
+            // Actualizar solo el valor de "isLocked"
+            restrictions.putBoolean("isLocked", true)
+
             Log.d("LockDeviceReceiver", "Restricciones creadas: $restrictions")
 
-            // Aplicar restricciones
+            // Aplicar restricciones actualizadas
             devicePolicyManager.setApplicationRestrictions(
                 adminComponent,
                 context.packageName,
