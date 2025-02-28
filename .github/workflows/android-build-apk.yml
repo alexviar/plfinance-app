@@ -1,0 +1,70 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - release
+  workflow_dispatch:
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+    # Ejecutar:
+    # • Automáticamente cuando se haga push a la rama release.
+    # • Manualmente (workflow_dispatch) solo si el workflow se dispara en la rama dev.
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev')
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+          cache: "npm"
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Cache de Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          licenses: |
+            android-sdk-license
+            android-googletv-license
+            android-sdk-preview-license
+
+      - name: Preparar Keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_CONTENT }}" | base64 -d > android/app/release.keystore
+
+      - name: Generar APK
+        env:
+          ORG_GRADLE_PROJECT_SIGNING_KEYSTORE_FILE: release.keystore
+          ORG_GRADLE_PROJECT_SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon --build-cache
+
+      - name: Subir APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
