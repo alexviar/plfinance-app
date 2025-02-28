@@ -61,6 +61,7 @@ jobs:
           ORG_GRADLE_PROJECT_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd android
+          chmod +x gradlew  # Dar permisos de ejecución al archivo
           ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: Subir APK
