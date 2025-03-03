@@ -27,6 +27,9 @@ const App = () => {
 
   useEffect(() => {
     console.log("Hola mundo")
+    messaging()
+      .getToken()
+      .then(console.log, console.error)
   }, [])
 
   return (
