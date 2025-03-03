@@ -52,6 +52,8 @@ const MainScreen = ({ onReady }: Props) => {
               postMessage({ type: 'setState', payload: { locked, enrollmentData } })
             } else if (event === 'unlock') {
               NativeModules.DeviceManagement.unlock();
+            } else if (event === 'installment_paid') {
+              NativeModules.DeviceManagement.cancelDeviceLock(payload.deviceId);
             } else if (event === 'enroll_device') {
               const pendingToken = messaging()
                 .getToken()
