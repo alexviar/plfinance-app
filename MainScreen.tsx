@@ -53,7 +53,7 @@ const MainScreen = ({ onReady }: Props) => {
             } else if (event === 'unlock') {
               NativeModules.DeviceManagement.unlock();
             } else if (event === 'installment_paid') {
-              NativeModules.DeviceManagement.cancelDeviceLock(payload.deviceId);
+              NativeModules.DeviceManagement.cancelDeviceLock(payload.installmentId);
             } else if (event === 'enroll_device') {
               const pendingToken = messaging()
                 .getToken()
