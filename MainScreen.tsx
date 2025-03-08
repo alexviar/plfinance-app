@@ -1,6 +1,6 @@
 import messaging from '@react-native-firebase/messaging';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, Animated, NativeModules, Alert, Button } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler } from 'react-native';
 import WebView from 'react-native-webview';
 
 const debugging = `
@@ -31,6 +31,33 @@ const MainScreen = ({ onReady }: Props) => {
     webViewRef.current?.injectJavaScript(script);
   }, [])
 
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    let lastBackPressed = 0;
+    const backAction = () => {
+      if (canGoBack) {
+        webViewRef.current?.goBack();
+        return true; // Interceptamos el back para navegar hacia atrás
+      } else {
+        // Implementación de "doble toque" para salir
+        const time = new Date().getTime();
+        if (time - lastBackPressed < 2000) {
+          // Si se presiona dos veces en menos de 2 segundos, se permite la salida
+          return false;
+        } else {
+          lastBackPressed = time;
+          ToastAndroid.show('Presiona de nuevo para salir', ToastAndroid.SHORT);
+          return true; // Interceptamos el back para evitar cerrar inmediatamente
+        }
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [canGoBack]);
+
   return (
     <>
       <WebView
@@ -40,6 +67,7 @@ const MainScreen = ({ onReady }: Props) => {
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
         source={{ uri: "https://plfinance.girchop.com" }}
+        onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
         onMessage={async ({ nativeEvent: { data } }) => {
           try {
             const { event, payload } = JSON.parse(data);
