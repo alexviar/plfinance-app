@@ -1,6 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler } from 'react-native';
+import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking } from 'react-native';
+import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
 
 const debugging = `
@@ -67,6 +68,14 @@ const MainScreen = ({ onReady }: Props) => {
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
         source={{ uri: "https://plfinance.girchop.com" }}
+        onFileDownload={async ({ nativeEvent }) => {
+          if (Platform.OS === 'android') {
+            const result = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE)
+            if (result !== 'granted') return
+          }
+          const { downloadUrl } = nativeEvent
+          Linking.openURL(downloadUrl)
+        }}
         onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
         onMessage={async ({ nativeEvent: { data } }) => {
           try {
