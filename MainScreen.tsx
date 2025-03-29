@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
+import { useFetchAppSettings } from './useFetchAppSettings';
 
 const debugging = `
   const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'event': 'debug', 'payload': {'type': type, 'log': log}}));
@@ -59,6 +60,10 @@ const MainScreen = ({ onReady }: Props) => {
     return () => backHandler.remove();
   }, [canGoBack]);
 
+  const { data: { webUrl } = {} } = useFetchAppSettings();
+
+  if (!webUrl) return null;
+
   return (
     <>
       <WebView
@@ -67,7 +72,7 @@ const MainScreen = ({ onReady }: Props) => {
         style={{ display: loaded ? 'flex' : 'none' }}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
-        source={{ uri: "https://plfinance.girchop.com" }}
+        source={{ uri: webUrl }}
         onFileDownload={async ({ nativeEvent }) => {
           if (Platform.OS === 'android') {
             const result = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE)
