@@ -55,10 +55,10 @@ jobs:
 
       - name: Generar APK
         env:
-          ORG_GRADLE_PROJECT_SIGNING_KEYSTORE_FILE: release.keystore
-          ORG_GRADLE_PROJECT_SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKeystoreFile: release.keystore
+          ORG_GRADLE_PROJECT_signingStorePassword: ${{ secrets.STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKeyAlias: ${{ secrets.KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_signingKeyPassword: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd android
           chmod +x gradlew  # Dar permisos de ejecución al archivo
