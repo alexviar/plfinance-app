@@ -1,8 +1,78 @@
+import Pushy from 'pushy-react-native';
 import React, { useEffect, useState } from 'react';
 import { NativeModules, PermissionsAndroid, SafeAreaView } from 'react-native';
 import BootSplash from "react-native-bootsplash";
 import MainScreen from './MainScreen';
 import SplashVideo from './SplashVideo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { DeviceManagement } = NativeModules
+
+Pushy.setNotificationListener(async (data: any) => {
+  console.log('Received notification: ' + JSON.stringify(data));
+
+  let notificationTitle = 'P&L Finance';
+
+  let notificationText = data.message;
+
+  Pushy.notify(notificationTitle, notificationText, data);
+
+  Pushy.setBadge(0);
+
+  const { type } = data.event as any
+  if (type == 'lock') {
+    DeviceManagement.lock();
+  } else if (type == 'unlock') {
+    DeviceManagement.unlock();
+  } else if (type == 'release') {
+    DeviceManagement.release();
+  }
+});
+
+
+interface DeviceRegistration {
+  token: string;
+  // deviceId: string;
+  // model: string;
+  // manufacturer: string;
+}
+
+export class ApiService {
+  private static BASE_URL = 'http://plfinancedev.eastus.cloudapp.azure.com:8000/api';
+
+  static async registerDevice(token: string): Promise<void> {
+    try {
+      const deviceInfo = await this.getDeviceInfo();
+      const response = await fetch(`${this.BASE_URL}/devices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          ...deviceInfo
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to register device:', error);
+      throw error;
+    }
+  }
+
+  private static async getDeviceInfo(): Promise<Omit<DeviceRegistration, 'token'>> {
+    // const { Brand, Model } = await DeviceInfo.getConstants();
+    // return {
+    //   deviceId: await DeviceInfo.getUniqueId(),
+    //   model: Model,
+    //   manufacturer: Brand,
+    // };
+    return await Promise.resolve({})
+  }
+}
 
 const App = () => {
   const [mainScreenReady, setMainScreenReady] = useState(false);
@@ -26,10 +96,20 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    console.log("Hola mundo")
-    messaging()
-      .getToken()
-      .then(console.log, console.error)
+    Pushy.toggleForegroundService(true)
+    Pushy.listen()
+    Pushy.register()
+      .then(async deviceToken => {
+        const currentDeviceToken = await AsyncStorage.getItem('deviceToken')
+        if (currentDeviceToken === deviceToken) return
+
+        console.log('DeviceToken', deviceToken)
+        AsyncStorage.setItem('deviceToken', deviceToken)
+
+      })
+      .catch(err => {
+        console.error('Registration failed: ' + err.message);
+      });
   }, [])
 
   return (

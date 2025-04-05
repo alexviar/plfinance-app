@@ -5,8 +5,11 @@
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <uses-permission android:name="android.Manifest.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS" />
   <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
   <application
     android:name=".MainApplication"
@@ -58,5 +61,9 @@
         <action android:name="com.plfinance.LOCK_DEVICE" />
       </intent-filter>
     </receiver>
+    <service
+      android:name="me.pushy.sdk.services.PushySocketService"
+      android:foregroundServiceType="remoteMessaging"
+      android:stopWithTask="false" />
   </application>
 </manifest>

@@ -1,9 +1,9 @@
-import messaging from '@react-native-firebase/messaging';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
 import { useFetchAppSettings } from './useFetchAppSettings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const debugging = `
   const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'event': 'debug', 'payload': {'type': type, 'log': log}}));
@@ -97,8 +97,7 @@ const MainScreen = ({ onReady }: Props) => {
             } else if (event === 'installment_paid') {
               NativeModules.DeviceManagement.cancelDeviceLock(payload.installmentId);
             } else if (event === 'enroll_device') {
-              const pendingToken = messaging()
-                .getToken()
+              const pendingToken = AsyncStorage.getItem('deviceToken')
 
               console.log(payload);
               NativeModules.DeviceManagement.enroll(payload);
