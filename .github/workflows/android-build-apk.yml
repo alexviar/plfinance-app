@@ -9,10 +9,6 @@ on:
 jobs:
   build_apk:
     runs-on: ubuntu-latest
-    # Ejecutar:
-    # • Automáticamente cuando se haga push a la rama release.
-    # • Manualmente (workflow_dispatch) solo si el workflow se dispara en la rama dev.
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev')
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
