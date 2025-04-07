@@ -112,6 +112,10 @@ const App = () => {
       });
   }, [])
 
+  useEffect(() => {
+    DeviceManagement.disallowFactoryReset()
+  }, [])
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {!mainScreenReady && (
