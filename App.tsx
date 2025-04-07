@@ -20,9 +20,12 @@ Pushy.setNotificationListener(async (data: any) => {
   Pushy.setBadge(0);
 
   const { type } = data.event as any
+  console.log(data.event, type, type == 'lock', type == 'unlock');
   if (type == 'lock') {
+    console.log('locking', DeviceManagement);
     DeviceManagement.lock();
   } else if (type == 'unlock') {
+    console.log('unlocking', DeviceManagement);
     DeviceManagement.unlock();
   } else if (type == 'release') {
     DeviceManagement.release();
