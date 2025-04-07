@@ -81,6 +81,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     public void lock() {
         String packageName = getReactApplicationContext().getPackageName();
         if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
+            Log.e(TAG, "Bloqueando dispositivo");
 
             setIsLocked(true);
 
@@ -99,6 +100,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     public void unlock() {
         Activity currentActivity = getCurrentActivity();
         if (currentActivity != null) {
+            Log.e(TAG, "Desbloqueando dispositivo");
 
             setIsLocked(false);
 
@@ -115,6 +117,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     @SuppressWarnings("deprecation")
     public void release() {
         try {
+            Log.e(TAG, "Liberando dispositivo");
             if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
                 devicePolicyManager.clearDeviceOwnerApp(reactContext.getPackageName());
                 Log.d(TAG, "Device owner eliminado correctamente");
