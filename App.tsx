@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const { DeviceManagement } = NativeModules
 
 Pushy.setNotificationListener(async (data: any) => {
-  console.log('Received notification: ' + JSON.stringify(data));
+  console.log('Received notification: ', data);
 
   let notificationTitle = 'P&L Finance';
 
