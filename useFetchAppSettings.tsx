@@ -10,10 +10,12 @@ export function useFetchAppSettings() {
   const [value, setValue] = useState<{ webUrl: string } | undefined>();
 
   const fetchUrlFromServer = useCallback(async () => {
+    let value
     try {
       const cachedUrl = await AsyncStorage.getItem(CACHE_KEY);
       if (cachedUrl) {
-        setValue({ webUrl: cachedUrl });
+        value = { webUrl: cachedUrl }
+        setValue(value);
       }
     } catch { }
 
