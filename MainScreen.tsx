@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking } from 'react-native';
+import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
 import { useFetchAppSettings } from './useFetchAppSettings';
@@ -59,6 +59,18 @@ const MainScreen = ({ onReady }: Props) => {
 
     return () => backHandler.remove();
   }, [canGoBack]);
+
+  useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(NativeModules.DeviceManagement);
+    const subscription = eventEmitter.addListener('onLockStateChanged', (event) => {
+      console.log('Lock state changed:', event.isLocked);
+      const enrollmentData = NativeModules.DeviceManagement.getEnrollmentData();
+      console.log("state", { locked: event.isLocked, enrollmentData })
+      postMessage({ type: 'setState', payload: { locked: event.isLocked, enrollmentData } })
+    });
+
+    return () => subscription.remove();
+  }, [])
 
   const { data: { webUrl } = {} } = useFetchAppSettings();
 

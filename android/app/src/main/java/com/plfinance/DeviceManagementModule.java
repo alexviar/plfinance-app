@@ -91,6 +91,8 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             Intent intent = new Intent(reactContext, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             reactContext.startActivity(intent);
+
+            emitLockStateChanged(true);
         } else {
             Log.e(TAG, "La app no es propietaria del dispositivo");
         }
@@ -107,10 +109,19 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             currentActivity.stopLockTask();
             currentActivity.finish();
 
+            emitLockStateChanged(false);
             Log.e(TAG, "Dispositivo desbloqueado y restricción eliminada");
         } else {
             Log.e(TAG, "La app no está en primer plano");
         }
+    }
+
+    private void emitLockStateChanged(boolean isLocked) {
+        WritableMap params = Arguments.createMap();
+        params.putBoolean("isLocked", isLocked);
+        reactContext
+            .getJSModule(com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit("onLockStateChanged", params);
     }
 
     @ReactMethod
@@ -293,4 +304,15 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             pendingIntent.cancel(); // Limpiar el PendingIntent
         }
     }
+
+    @ReactMethod
+    public void addListener(String eventName) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
 }
