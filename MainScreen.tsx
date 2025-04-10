@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter } from 'react-native';
+import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter, View, Text } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
 import { useFetchAppSettings } from './useFetchAppSettings';
@@ -76,6 +76,20 @@ const MainScreen = ({ onReady }: Props) => {
 
   if (!webUrl) return null;
 
+  const renderErrorView = () => (
+    <View style={styles.errorContainer}>
+      <Text style={styles.errorText}>Ocurrió un error al cargar la página.</Text>
+      <Button
+        title="Reintentar"
+        onPress={() => {
+          if (webViewRef) {
+            webViewRef.current?.reload();
+          }
+        }}
+      />
+    </View>
+  );
+
   return (
     <>
       <WebView
@@ -85,6 +99,7 @@ const MainScreen = ({ onReady }: Props) => {
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
         source={{ uri: webUrl }}
+        renderError={renderErrorView}
         onFileDownload={async ({ nativeEvent }) => {
           if (Platform.OS === 'android') {
             const result = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE)
@@ -140,6 +155,16 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    marginBottom: 10,
   }
 });
 
