@@ -207,7 +207,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        Intent intent = new Intent(getReactApplicationContext(), InstallmentDueReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
 
         // Usar installmentId como request code para cancelación individual
@@ -286,7 +286,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         if (alarmManager == null)
             return;
 
-        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        Intent intent = new Intent(getReactApplicationContext(), InstallmentDueReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
 
         // Configurar flags según versión de Android

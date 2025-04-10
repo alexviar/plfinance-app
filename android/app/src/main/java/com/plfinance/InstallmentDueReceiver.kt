@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 
-class LockDeviceReceiver : BroadcastReceiver() {
+class InstallmentDueReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("LockDeviceReceiver", "onReceive called")
 
