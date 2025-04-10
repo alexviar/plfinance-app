@@ -11,13 +11,15 @@ const { DeviceManagement, Updater } = NativeModules
 Pushy.setNotificationListener(async (data: any) => {
   console.log('Received notification: ', data);
 
-  let notificationTitle = 'P&L Finance';
+  if (data.message) {
+    let notificationTitle = 'P&L Finance';
 
-  let notificationText = data.message;
+    let notificationText = data.message;
 
-  Pushy.notify(notificationTitle, notificationText, data);
+    Pushy.notify(notificationTitle, notificationText, data);
 
-  Pushy.setBadge(0);
+    Pushy.setBadge(0);
+  }
 
   const { type, payload } = JSON.parse(data.event)
   if (type == 'lock') {
