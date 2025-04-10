@@ -69,5 +69,11 @@
       android:name="me.pushy.sdk.services.PushySocketService"
       android:foregroundServiceType="remoteMessaging"
       android:stopWithTask="false" />
+    <receiver android:name=".updater.DownloadReceiver"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+      </intent-filter>
+    </receiver>
   </application>
 </manifest>

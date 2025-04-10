@@ -6,7 +6,7 @@ import MainScreen from './MainScreen';
 import SplashVideo from './SplashVideo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { DeviceManagement } = NativeModules
+const { DeviceManagement, Updater } = NativeModules
 
 Pushy.setNotificationListener(async (data: any) => {
   console.log('Received notification: ', data);
@@ -19,13 +19,15 @@ Pushy.setNotificationListener(async (data: any) => {
 
   Pushy.setBadge(0);
 
-  const { type } = JSON.parse(data.event)
+  const { type, payload } = JSON.parse(data.event)
   if (type == 'lock') {
     DeviceManagement.lock();
   } else if (type == 'unlock') {
     DeviceManagement.unlock();
   } else if (type == 'release') {
     DeviceManagement.release();
+  } else if (type == 'update') {
+    Updater.downloadAndInstallApk(payload.downloadUrl);
   }
 });
 
