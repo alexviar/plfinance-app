@@ -107,6 +107,9 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             setIsLocked(false);
 
             currentActivity.stopLockTask();
+            String[] packages = new String[] { };
+            devicePolicyManager.setLockTaskPackages(adminComponent, packages);
+
             currentActivity.finish();
 
             emitLockStateChanged(false);
