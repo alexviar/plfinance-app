@@ -63,6 +63,9 @@
       </intent-filter>
     </receiver>
     <service
+      android:name=".InstallmentDueService"
+      android:exported="false" />
+    <service
       android:name="me.pushy.sdk.services.PushySocketService"
       android:foregroundServiceType="remoteMessaging"
       android:stopWithTask="false" />
