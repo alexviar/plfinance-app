@@ -77,7 +77,7 @@ const MainScreen = ({ onReady }: Props) => {
   if (!webUrl) return null;
 
   const renderErrorView = () => (
-    <View style={styles.errorContainer}>
+    <View style={[StyleSheet.absoluteFill, styles.errorContainer]}>
       <Text style={styles.errorText}>Ocurrió un error al cargar la aplicación.</Text>
       <Button
         title="Reintentar"
@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white'
   },
   errorText: {
     fontSize: 18,
