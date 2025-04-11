@@ -78,7 +78,7 @@ const MainScreen = ({ onReady }: Props) => {
 
   const renderErrorView = () => (
     <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>Ocurrió un error al cargar la página.</Text>
+      <Text style={styles.errorText}>Ocurrió un error al cargar la aplicación.</Text>
       <Button
         title="Reintentar"
         onPress={() => {
