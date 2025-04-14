@@ -14,6 +14,9 @@ const debugging = `
     warn: (...log) => consoleLog('warn', log),
     error: (...log) => consoleLog('error', log),
   };
+  const resources = performance.getEntriesByType("resource");
+  const cssResources = resources.filter((r) => r.initiatorType === "link" && r.name.endsWith(".css"));
+  alert("Css cargados:" + JSON.stringify(cssResources));
   true;
 `;
 
