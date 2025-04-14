@@ -98,6 +98,13 @@ const MainScreen = ({ onReady }: Props) => {
       <WebView
         ref={webViewRef}
         injectedJavaScript={debugging}
+        injectedJavaScriptBeforeContentLoaded={`
+          window.onerror = function(message, sourcefile, lineno, colno, error) {
+            alert("Message: " + message + " - Source: " + sourcefile + " Line: " + lineno + ":" + colno);
+            return true;
+          };
+          true;
+        `}
         style={{ display: loaded ? 'flex' : 'none' }}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
