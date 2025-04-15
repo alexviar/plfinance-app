@@ -22,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
               add(com.plfinance.DeviceManagementPackage())
               add(com.plfinance.updater.UpdaterPackage())
+              add(com.plfinance.webviewinfo.WebViewInfoPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

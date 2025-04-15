@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Animated, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter, View, Text } from 'react-native';
+import { StyleSheet, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter, View, Text } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
 import { useFetchAppSettings } from './useFetchAppSettings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PromptModal } from './PromptModal';
+
+const webViewInfoEmitter = new NativeEventEmitter(NativeModules.WebViewInfo);
 
 const debugging = `
   const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'event': 'debug', 'payload': {'type': type, 'log': log}}));
@@ -24,6 +27,7 @@ type Props = {
 const MainScreen = ({ onReady }: Props) => {
   const webViewRef = useRef<WebView>(null);
   const [loaded, setLoaded] = React.useState(false);
+  const [shouldUpdateWebView, setShouldUpdateWebView] = useState<boolean>(false)
 
   const postMessage = useCallback((data: any) => {
     const script = `
@@ -31,6 +35,34 @@ const MainScreen = ({ onReady }: Props) => {
     true;
     `;
     webViewRef.current?.injectJavaScript(script);
+  }, [])
+
+  useEffect(() => {
+    function checkWebViewVersion(info: any) {
+      console.log('WebViewInfo event:', info)
+      const versionNameParts = info.versionName.split('.')
+      const majorVersion = parseInt(versionNameParts[0], 10)
+      if (info.packageName !== 'com.google.android.webview') {
+        Alert.alert('Error de compatibilidad', `El componente WebView "${info.packageName}" no es compatible con la aplicación.`);
+      }
+      if (majorVersion < 111) {
+        setShouldUpdateWebView(true)
+      }
+      else {
+        setShouldUpdateWebView(false)
+      }
+    }
+
+    const WebViewInfo = NativeModules.WebViewInfo
+
+    const sub = webViewInfoEmitter.addListener('onUpdated', checkWebViewVersion);
+
+    const packageName = WebViewInfo.getPackageName()
+    const versionName = WebViewInfo.getVersionName()
+    const versionCode = WebViewInfo.getVersionCode()
+    checkWebViewVersion({ packageName, versionName, versionCode })
+
+    return () => sub.remove();
   }, [])
 
   const [canGoBack, setCanGoBack] = useState(false);
@@ -145,6 +177,13 @@ const MainScreen = ({ onReady }: Props) => {
           setLoaded(true)
           onReady?.()
         }}
+      />
+      <PromptModal
+        visible={shouldUpdateWebView}
+        title="Actualización requerida"
+        message="Por favor actualiza tu WebView para continuar"
+        onCancel={() => BackHandler.exitApp()}
+        onAccept={() => Linking.openURL(`https://play.google.com/store/apps/details?id=${NativeModules.WebViewInfo.getPackageName()}`)}
       />
     </>
   );
