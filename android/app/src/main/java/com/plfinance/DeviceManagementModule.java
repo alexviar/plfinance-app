@@ -85,7 +85,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
 
             setIsLocked(true);
 
-            String[] packages = new String[] { packageName };
+            String[] packages = new String[] { packageName, "com.android.settings" };
             devicePolicyManager.setLockTaskPackages(adminComponent, packages);
 
             Intent intent = new Intent(reactContext, MainActivity.class);

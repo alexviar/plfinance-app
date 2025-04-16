@@ -128,6 +128,12 @@ const MainScreen = ({ onReady }: Props) => {
           }
         }}
       />
+      <Button
+        title="Seleccionar una red"
+        onPress={() => {
+          Linking.sendIntent('android.settings.WIFI_SETTINGS').catch(console.error)
+        }}
+      />
     </View>
   );
 
@@ -207,6 +213,7 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
+    gap: 16,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'white'
