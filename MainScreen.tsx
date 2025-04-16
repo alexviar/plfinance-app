@@ -190,7 +190,7 @@ const MainScreen = ({ onReady }: Props) => {
       <PromptModal
         visible={shouldUpdateWebView}
         title="Actualización requerida"
-        message={`Tu versión actual de WebView es ${NativeModules.WebViewInfo.getVersionName().split('.')[0]}, pero se requiere al menos la versión ${webviewPackageMinimumVersions[NativeModules.WebViewInfo.getPackageName()]}. 
+        message={`La versión actual del WebView es la ${NativeModules.WebViewInfo.getVersionName().split('.')[0]}, pero se requiere al menos la versión ${webviewPackageMinimumVersions[NativeModules.WebViewInfo.getPackageName()]}. 
 Por favor, actualiza el componente WebView para continuar utilizando la aplicación.`}
         onCancel={() => BackHandler.exitApp()}
         onAccept={() => Linking.openURL(`https://play.google.com/store/apps/details?id=${NativeModules.WebViewInfo.getPackageName()}`)}
