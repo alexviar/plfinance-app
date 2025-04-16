@@ -42,8 +42,11 @@ const MainScreen = ({ onReady }: Props) => {
       'com.android.chrome': 111,
       'com.google.android.webview': 111,
     }
+    let lastPackageName = '', lastVersionName = ''
     function checkWebViewVersion(info: any) {
       console.log('WebViewInfo event:', info)
+      if (lastPackageName === info.packageName && lastVersionName === info.versionName) return
+
       const versionNameParts = info.versionName.split('.')
       const majorVersion = parseInt(versionNameParts[0], 10)
       const minimumVersion = webviewPackagesMinMajorVersion[info.packageName]
