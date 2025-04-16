@@ -20,6 +20,11 @@ const debugging = `
   true;
 `;
 
+const webviewPackageMinimumVersions: Record<string, number> = {
+  'com.android.chrome': 111,
+  'com.google.android.webview': 111,
+}
+
 type Props = {
   onReady?(): void
 }
@@ -38,10 +43,6 @@ const MainScreen = ({ onReady }: Props) => {
   }, [])
 
   useEffect(() => {
-    const webviewPackagesMinMajorVersion: Record<string, number> = {
-      'com.android.chrome': 111,
-      'com.google.android.webview': 111,
-    }
     let lastPackageName = '', lastVersionName = ''
     function checkWebViewVersion(info: any) {
       console.log('WebViewInfo event:', info)
@@ -49,7 +50,7 @@ const MainScreen = ({ onReady }: Props) => {
 
       const versionNameParts = info.versionName.split('.')
       const majorVersion = parseInt(versionNameParts[0], 10)
-      const minimumVersion = webviewPackagesMinMajorVersion[info.packageName]
+      const minimumVersion = webviewPackageMinimumVersions[info.packageName]
       if (!minimumVersion) {
         Alert.alert('Webview no reconocido', `Detectamos el componente WebView "${info.packageName}", el cual no esta en nuestra lista de componentes compatibles.`);
       }
@@ -189,7 +190,8 @@ const MainScreen = ({ onReady }: Props) => {
       <PromptModal
         visible={shouldUpdateWebView}
         title="Actualización requerida"
-        message="Por favor actualiza tu WebView para continuar"
+        message={`Tu versión actual de WebView es ${NativeModules.WebViewInfo.getVersionName().split('.')[0]}, pero se requiere al menos la versión ${webviewPackageMinimumVersions[NativeModules.WebViewInfo.getPackageName()]}. 
+Por favor, actualiza el componente WebView para continuar utilizando la aplicación.`}
         onCancel={() => BackHandler.exitApp()}
         onAccept={() => Linking.openURL(`https://play.google.com/store/apps/details?id=${NativeModules.WebViewInfo.getPackageName()}`)}
       />
