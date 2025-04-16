@@ -51,7 +51,7 @@ const MainScreen = ({ onReady }: Props) => {
       const majorVersion = parseInt(versionNameParts[0], 10)
       const minimumVersion = webviewPackagesMinMajorVersion[info.packageName]
       if (!minimumVersion) {
-        Alert.alert('Error de compatibilidad', `El componente WebView "${info.packageName}" no es compatible con la aplicación.`);
+        Alert.alert('Webview no reconocido', `Detectamos el componente WebView "${info.packageName}", el cual no esta en nuestra lista de componentes compatibles.`);
       }
       if (majorVersion < minimumVersion) {
         setShouldUpdateWebView(true)
