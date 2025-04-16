@@ -38,14 +38,19 @@ const MainScreen = ({ onReady }: Props) => {
   }, [])
 
   useEffect(() => {
+    const webviewPackagesMinMajorVersion: Record<string, number> = {
+      'com.android.chrome': 111,
+      'com.google.android.webview': 111,
+    }
     function checkWebViewVersion(info: any) {
       console.log('WebViewInfo event:', info)
       const versionNameParts = info.versionName.split('.')
       const majorVersion = parseInt(versionNameParts[0], 10)
-      if (info.packageName !== 'com.google.android.webview') {
+      const minimumVersion = webviewPackagesMinMajorVersion[info.packageName]
+      if (!minimumVersion) {
         Alert.alert('Error de compatibilidad', `El componente WebView "${info.packageName}" no es compatible con la aplicación.`);
       }
-      if (majorVersion < 111) {
+      if (majorVersion < minimumVersion) {
         setShouldUpdateWebView(true)
       }
       else {
