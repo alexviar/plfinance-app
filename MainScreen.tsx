@@ -5,6 +5,7 @@ import WebView from 'react-native-webview';
 import { useFetchAppSettings } from './useFetchAppSettings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PromptModal } from './PromptModal';
+import { WebViewError } from './WebViewError';
 
 const webViewInfoEmitter = new NativeEventEmitter(NativeModules.WebViewInfo);
 
@@ -118,23 +119,9 @@ const MainScreen = ({ onReady }: Props) => {
   if (!webUrl) return null;
 
   const renderErrorView = () => (
-    <View style={[StyleSheet.absoluteFill, styles.errorContainer]}>
-      <Text style={styles.errorText}>Ocurrió un error al cargar la aplicación.</Text>
-      <Button
-        title="Reintentar"
-        onPress={() => {
-          if (webViewRef) {
-            webViewRef.current?.reload();
-          }
-        }}
-      />
-      <Button
-        title="Seleccionar una red"
-        onPress={() => {
-          Linking.sendIntent('android.settings.WIFI_SETTINGS').catch(console.error)
-        }}
-      />
-    </View>
+    <WebViewError
+      onRetry={() => webViewRef.current?.reload()}
+    />
   );
 
   return (
@@ -204,25 +191,5 @@ Por favor, actualiza el componente WebView para continuar utilizando la aplicaci
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    gap: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white'
-  },
-  errorText: {
-    fontSize: 18,
-    color: 'red',
-    marginBottom: 10,
-  }
-});
 
 export default MainScreen;
