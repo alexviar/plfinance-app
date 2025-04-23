@@ -222,6 +222,10 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             long dueTimeMillis = Long.parseLong(dueDateTimestamp);
+            if (dueTimeMillis <= System.currentTimeMillis()) {
+                Log.d(TAG, "Due date is in the past, skipping alarm for installment " + installmentId);
+                return;
+            }
             calendar.setTimeInMillis(dueTimeMillis);
         } catch (NumberFormatException e) {
             e.printStackTrace();
