@@ -36,6 +36,7 @@ public class TimeChangedReceiver extends BroadcastReceiver {
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
+            long currentTimeMillis = System.currentTimeMillis();
             boolean shouldLockDevice = false;
             for (Parcelable p : installments) {
                 Bundle installment = (Bundle) p;
@@ -50,7 +51,6 @@ public class TimeChangedReceiver extends BroadcastReceiver {
                 calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
                 try {
                     long dueTimeMillis = Long.parseLong(dueDate);
-                    long currentTimeMillis = System.currentTimeMillis();
                     if (dueTimeMillis <= currentTimeMillis) {
                         Log.d("TimeChange", "Due date is in the past, starting InstallmentDueService for installment " 
                             + installmentId + " (dueTimeMillis=" + dueTimeMillis + ", currentTimeMillis=" + currentTimeMillis + ")");
