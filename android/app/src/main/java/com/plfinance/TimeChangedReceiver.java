@@ -90,7 +90,7 @@ public class TimeChangedReceiver extends BroadcastReceiver {
                             newPendingIntent
                     );
                 }
-                Log.d("TimeChange", "Alarm reprogrammed for installment " + installmentId + " (dueTimeMillis=" + dueTimeMillis + ")");
+                Log.d("TimeChange", "Alarm reprogrammed for installment " + installmentId + " (dueDate=" + dueDate + ")");
             }
 
             if(shouldLockDevice){
