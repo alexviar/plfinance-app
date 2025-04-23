@@ -307,6 +307,23 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel(); // Limpiar el PendingIntent
         }
+
+        // Eliminar el installment del enrollment bundle
+        Bundle enrollmentBundle = getEnrollmentBundle();
+        if (enrollmentBundle != null) {
+            Parcelable[] installments = enrollmentBundle.getParcelableArray("installments");
+            if (installments != null) {
+                java.util.List<Bundle> updatedList = new java.util.ArrayList<>();
+                for (Parcelable p : installments) {
+                    Bundle b = (Bundle) p;
+                    if (b.getInt("id") != installmentId) {
+                        updatedList.add(b);
+                    }
+                }
+                enrollmentBundle.putParcelableArray("installments", updatedList.toArray(new Bundle[0]));
+                setEnrollmentData(enrollmentBundle);
+            }
+        }
     }
 
     @ReactMethod
