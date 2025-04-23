@@ -36,6 +36,7 @@ public class TimeChangedReceiver extends BroadcastReceiver {
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
+            boolean shouldLockDevice = false;
             for (Parcelable p : installments) {
                 Bundle installment = (Bundle) p;
                 int installmentId = installment.getInt("id");
