@@ -272,6 +272,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
 
             Bundle installmentBundle = new Bundle();
             installmentBundle.putInt("id", installmentId);
+            installmentBundle.putString("dueDate", dueDate);
 
             installmentsBundles[i] = installmentBundle;
         }
