@@ -1,10 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pushy from 'pushy-react-native';
 import React, { useEffect, useState } from 'react';
 import { NativeModules, PermissionsAndroid, SafeAreaView } from 'react-native';
 import BootSplash from "react-native-bootsplash";
 import MainScreen from './MainScreen';
 import SplashVideo from './SplashVideo';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { DeviceManagement, Updater } = NativeModules
 
@@ -28,6 +28,8 @@ Pushy.setNotificationListener(async (data: any) => {
     DeviceManagement.unlock();
   } else if (type == 'release') {
     DeviceManagement.release();
+  } else if (type == 'installment_paid') {
+    DeviceManagement.cancelDeviceLock(payload.installment_id);
   } else if (type == 'update') {
     Updater.downloadAndInstallApk(payload.downloadUrl);
   }
