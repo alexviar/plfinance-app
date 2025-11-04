@@ -7,10 +7,10 @@ const { DeviceManagement, Updater } = NativeModules
 setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
   console.log('Message handled in the background!', JSON.stringify(remoteMessage));
   const { type, payload } = remoteMessage.data as any
-  if (type == 'unlock') {
+  if (type == 'lock') {
+    DeviceManagement.lock();
+  } else if (type == 'unlock') {
     DeviceManagement.unlock();
-  } else if (type == 'release') {
-    DeviceManagement.release();
   } else if (type == 'release') {
     DeviceManagement.release();
   } else if (type == 'installment_paid') {
