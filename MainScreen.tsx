@@ -1,10 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, NativeModules, Alert, Button, ToastAndroid, BackHandler, Platform, Linking, NativeEventEmitter, View, Text } from 'react-native';
+import { Alert, BackHandler, Linking, NativeEventEmitter, NativeModules, Platform, ToastAndroid } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import WebView from 'react-native-webview';
-import { useFetchAppSettings } from './useFetchAppSettings';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PromptModal } from './PromptModal';
+import { useFetchAppSettings } from './useFetchAppSettings';
 import { WebViewError } from './WebViewError';
 
 const webViewInfoEmitter = new NativeEventEmitter(NativeModules.WebViewInfo);
@@ -46,7 +46,6 @@ const MainScreen = ({ onReady }: Props) => {
   useEffect(() => {
     let lastPackageName = '', lastVersionName = ''
     function checkWebViewVersion(info: any) {
-      console.log('WebViewInfo event:', info)
       if (lastPackageName === info.packageName && lastVersionName === info.versionName) return
 
       const versionNameParts = info.versionName.split('.')
