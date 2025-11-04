@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApp } from '@react-native-firebase/app';
+import { getMessaging, getToken, onMessage, onTokenRefresh, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging';
 import Pushy from 'pushy-react-native';
 import React, { useEffect, useState } from 'react';
 import { NativeModules, PermissionsAndroid, SafeAreaView } from 'react-native';
@@ -57,21 +59,46 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    Pushy.toggleForegroundService(true)
-    Pushy.listen()
-    Pushy.register()
-      .then(async deviceToken => {
-        const currentDeviceToken = await AsyncStorage.getItem('deviceToken')
-        if (currentDeviceToken === deviceToken) return
+    const registerDevice = async () => {
+      await registerDeviceForRemoteMessages(messaging)
+      const token = await getToken(messaging)
+      updateToken(token)
+    }
 
-        console.log('DeviceToken', deviceToken)
-        AsyncStorage.setItem('deviceToken', deviceToken)
+    const updateToken = async (deviceToken: string) => {
+      const currentDeviceToken = await AsyncStorage.getItem('deviceToken')
+      if (currentDeviceToken === deviceToken) return
 
-      })
-      .catch(err => {
-        console.error('Registration failed: ' + err.message);
-      });
+      AsyncStorage.setItem('deviceToken', deviceToken)
+    }
+
+    const messaging = getMessaging(getApp())
+
+    onTokenRefresh(messaging, updateToken)
+
+    registerDevice().catch(err => console.error('Registration failed: ' + err.message));
   }, [])
+
+
+  useEffect(() => {
+    const unsubscribe = onMessage(getMessaging(), async remoteMessage => {
+      console.log(JSON.stringify(remoteMessage))
+      const { type, payload } = remoteMessage.data as any
+      if (type == 'lock') {
+        DeviceManagement.lock();
+      } else if (type == 'unlock') {
+        DeviceManagement.unlock();
+      } else if (type == 'release') {
+        DeviceManagement.release();
+      } else if (type == 'installment_paid') {
+        DeviceManagement.cancelDeviceLock(JSON.parse(payload).installment_id);
+      } else if (type == 'update') {
+        Updater.downloadAndInstallApk(JSON.parse(payload).downloadUrl);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     DeviceManagement.disallowFactoryReset()
