@@ -51,17 +51,17 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     }
 
     private void setIsLocked(boolean isLocked) {
-        String packageName = getReactApplicationContext().getPackageName();
-        Bundle bundle = devicePolicyManager
-                .getApplicationRestrictions(adminComponent, packageName);
+        if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
+            String packageName = getReactApplicationContext().getPackageName();
+            Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
+            Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
 
-        if (bundle == null) {
-            bundle = new Bundle();
+            restrictions.putBoolean("isLocked", isLocked);
+
+            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
+        } else {
+            Log.e(TAG, "La aplicación no es Device Owner");
         }
-
-        bundle.putBoolean("isLocked", isLocked);
-
-        devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, bundle);
     }
 
     @ReactMethod
@@ -81,15 +81,18 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     public void lock() {
         String packageName = getReactApplicationContext().getPackageName();
         if (devicePolicyManager.isDeviceOwnerApp(packageName)) {
+            Log.e(TAG, "Bloqueando dispositivo");
 
             setIsLocked(true);
 
-            String[] packages = new String[] { packageName };
+            String[] packages = new String[] { packageName, "com.android.settings" };
             devicePolicyManager.setLockTaskPackages(adminComponent, packages);
 
             Intent intent = new Intent(reactContext, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             reactContext.startActivity(intent);
+
+            emitLockStateChanged(true);
         } else {
             Log.e(TAG, "La app no es propietaria del dispositivo");
         }
@@ -99,22 +102,36 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     public void unlock() {
         Activity currentActivity = getCurrentActivity();
         if (currentActivity != null) {
+            Log.e(TAG, "Desbloqueando dispositivo");
 
             setIsLocked(false);
 
             currentActivity.stopLockTask();
+            String[] packages = new String[] {};
+            devicePolicyManager.setLockTaskPackages(adminComponent, packages);
+
             currentActivity.finish();
 
+            emitLockStateChanged(false);
             Log.e(TAG, "Dispositivo desbloqueado y restricción eliminada");
         } else {
             Log.e(TAG, "La app no está en primer plano");
         }
     }
 
+    private void emitLockStateChanged(boolean isLocked) {
+        WritableMap params = Arguments.createMap();
+        params.putBoolean("isLocked", isLocked);
+        reactContext
+                .getJSModule(com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("onLockStateChanged", params);
+    }
+
     @ReactMethod
     @SuppressWarnings("deprecation")
     public void release() {
         try {
+            Log.e(TAG, "Liberando dispositivo");
             if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
                 devicePolicyManager.clearDeviceOwnerApp(reactContext.getPackageName());
                 Log.d(TAG, "Device owner eliminado correctamente");
@@ -143,16 +160,12 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
     private void setEnrollmentData(Bundle enrollmentBundle) {
         if (devicePolicyManager.isDeviceOwnerApp(getReactApplicationContext().getPackageName())) {
             String packageName = getReactApplicationContext().getPackageName();
-            Bundle bundle = devicePolicyManager
-                    .getApplicationRestrictions(adminComponent, packageName);
+            Bundle currentRestrictions = devicePolicyManager.getApplicationRestrictions(adminComponent, packageName);
+            Bundle restrictions = (currentRestrictions != null) ? new Bundle(currentRestrictions) : new Bundle();
 
-            if (bundle == null) {
-                bundle = new Bundle();
-            }
+            restrictions.putBundle("enrollmentData", enrollmentBundle);
 
-            bundle.putBundle("enrollmentData", enrollmentBundle);
-
-            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, bundle);
+            devicePolicyManager.setApplicationRestrictions(adminComponent, packageName, restrictions);
         } else {
             Log.e(TAG, "La aplicación no es Device Owner");
         }
@@ -194,7 +207,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        Intent intent = new Intent(getReactApplicationContext(), InstallmentDueReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
 
         // Usar installmentId como request code para cancelación individual
@@ -209,6 +222,10 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             long dueTimeMillis = Long.parseLong(dueDateTimestamp);
+            if (dueTimeMillis <= System.currentTimeMillis()) {
+                Log.d(TAG, "Due date is in the past, skipping alarm for installment " + installmentId);
+                return;
+            }
             calendar.setTimeInMillis(dueTimeMillis);
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -259,6 +276,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
 
             Bundle installmentBundle = new Bundle();
             installmentBundle.putInt("id", installmentId);
+            installmentBundle.putString("dueDate", dueDate);
 
             installmentsBundles[i] = installmentBundle;
         }
@@ -273,7 +291,7 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
         if (alarmManager == null)
             return;
 
-        Intent intent = new Intent(getReactApplicationContext(), LockDeviceReceiver.class);
+        Intent intent = new Intent(getReactApplicationContext(), InstallmentDueReceiver.class);
         intent.setAction("com.plfinance.LOCK_DEVICE");
 
         // Configurar flags según versión de Android
@@ -293,5 +311,33 @@ public class DeviceManagementModule extends ReactContextBaseJavaModule {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel(); // Limpiar el PendingIntent
         }
+
+        // Eliminar el installment del enrollment bundle
+        Bundle enrollmentBundle = getEnrollmentBundle();
+        if (enrollmentBundle != null) {
+            Parcelable[] installments = enrollmentBundle.getParcelableArray("installments");
+            if (installments != null) {
+                java.util.List<Bundle> updatedList = new java.util.ArrayList<>();
+                for (Parcelable p : installments) {
+                    Bundle b = (Bundle) p;
+                    if (b.getInt("id") != installmentId) {
+                        updatedList.add(b);
+                    }
+                }
+                enrollmentBundle.putParcelableArray("installments", updatedList.toArray(new Bundle[0]));
+                setEnrollmentData(enrollmentBundle);
+            }
+        }
     }
+
+    @ReactMethod
+    public void addListener(String eventName) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
 }

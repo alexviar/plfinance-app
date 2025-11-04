@@ -14,6 +14,8 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 import com.zoontek.rnbootsplash.RNBootSplash;
@@ -37,6 +39,18 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
     super.onCreate(savedInstanceState) // super.onCreate(null) with react-native-screens
+
+    val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+        !powerManager.isIgnoringBatteryOptimizations(packageName)) {
+        
+        val intent = Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:$packageName")
+        )
+        startActivity(intent)
+    }
   }
 
   override fun onResume() {

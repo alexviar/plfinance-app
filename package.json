@@ -10,11 +10,14 @@
     "test": "jest"
   },
   "dependencies": {
-    "@react-native-firebase/app": "^21.7.1",
-    "@react-native-firebase/messaging": "^21.7.1",
+    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-firebase/app": "^23.5.0",
+    "@react-native-firebase/messaging": "^23.5.0",
+    "pushy-react-native": "^1.0.54",
     "react": "18.3.1",
     "react-native": "0.77.0",
     "react-native-bootsplash": "^6.3.2",
+    "react-native-permissions": "^5.3.0",
     "react-native-system-navigation-bar": "^2.6.4",
     "react-native-video": "^6.10.0",
     "react-native-webview": "^13.13.1"
