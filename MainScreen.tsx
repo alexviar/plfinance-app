@@ -113,7 +113,7 @@ const MainScreen = ({ onReady }: Props) => {
     return () => subscription.remove();
   }, [])
 
-  const { data: { webUrl } = {} } = useFetchAppSettings();
+  const { data: { webUrl = 'https://www.pl.finance' } = {} } = useFetchAppSettings();
 
   if (!webUrl) return null;
 
