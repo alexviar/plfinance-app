@@ -27,12 +27,15 @@ public class TimeChangedReceiver extends BroadcastReceiver {
             ComponentName adminComponent = new ComponentName(context, MyDeviceAdminReceiver.class);
             String packageName = context.getPackageName();
             Bundle restrictions = dpm.getApplicationRestrictions(adminComponent, packageName);
-            if (restrictions == null) return;
+            if (restrictions == null)
+                return;
             Bundle enrollmentBundle = restrictions.getBundle("enrollmentData");
-            if (enrollmentBundle == null) return;
+            if (enrollmentBundle == null)
+                return;
 
             Parcelable[] installments = enrollmentBundle.getParcelableArray("installments");
-            if (installments == null) return;
+            if (installments == null)
+                return;
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
@@ -42,18 +45,21 @@ public class TimeChangedReceiver extends BroadcastReceiver {
                 Bundle installment = (Bundle) p;
                 int installmentId = installment.getInt("id");
                 String dueDate = installment.getString("dueDate");
-                if (dueDate == null) continue;
+                if (dueDate == null)
+                    continue;
 
                 Intent alarmIntent = new Intent(context, InstallmentDueReceiver.class);
                 alarmIntent.setAction("com.plfinance.LOCK_DEVICE");
-                
+
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+                long dueTimeMillis = 0;
                 try {
-                    long dueTimeMillis = Long.parseLong(dueDate);
+                    dueTimeMillis = Long.parseLong(dueDate);
                     if (dueTimeMillis <= currentTimeMillis) {
-                        Log.d("TimeChange", "Due date is in the past, starting InstallmentDueService for installment " 
-                            + installmentId + " (dueTimeMillis=" + dueTimeMillis + ", currentTimeMillis=" + currentTimeMillis + ")");
+                        Log.d("TimeChange", "Due date is in the past, starting InstallmentDueService for installment "
+                                + installmentId + " (dueTimeMillis=" + dueTimeMillis + ", currentTimeMillis="
+                                + currentTimeMillis + ")");
 
                         shouldLockDevice = true;
 
@@ -74,30 +80,28 @@ public class TimeChangedReceiver extends BroadcastReceiver {
                         context,
                         installmentId,
                         alarmIntent,
-                        setFlags
-                );
+                        setFlags);
 
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                     alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,
                             calendar.getTimeInMillis(),
-                            newPendingIntent
-                    );
+                            newPendingIntent);
                 } else {
                     alarmManager.setExact(
                             AlarmManager.RTC_WAKEUP,
                             calendar.getTimeInMillis(),
-                            newPendingIntent
-                    );
+                            newPendingIntent);
                 }
-                Log.d("TimeChange", "Alarm reprogrammed for installment " + installmentId + " (dueTimeMillis=" + dueTimeMillis + ")");
+                Log.d("TimeChange", "Alarm reprogrammed for installment " + installmentId + " (dueTimeMillis="
+                        + dueTimeMillis + ")");
             }
 
-            if(shouldLockDevice){
+            if (shouldLockDevice) {
                 Intent serviceIntent = new Intent(context, InstallmentDueService.class);
-                            context.startService(serviceIntent);
-                            HeadlessJsTaskService.acquireWakeLockNow(context);
-                
+                context.startService(serviceIntent);
+                HeadlessJsTaskService.acquireWakeLockNow(context);
+
                 Log.d("TimeChange", "Cuota vencida detectada, iniciando InstallmentDueService");
             }
         }
